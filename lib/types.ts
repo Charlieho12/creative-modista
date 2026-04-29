@@ -24,6 +24,18 @@ export type Product = {
   createdAt: string;
 };
 
+export type ProductReview = {
+  id: string;
+  productId: string;
+  reviewerName: string;
+  rating: number;
+  title: string;
+  body: string;
+  source: "customer" | "ai_generated";
+  generatedByModel: string | null;
+  createdAt: string;
+};
+
 export type CartItem = {
   productId: string;
   name: string;

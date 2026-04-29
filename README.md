@@ -22,7 +22,8 @@ cp .env.local.example .env.local
 4. Run the Supabase migration in `supabase/migrations/001_creative_modista_schema.sql`.
 
 5. Run any later migrations, including
-`supabase/migrations/002_sync_profile_email_confirmation.sql`.
+`supabase/migrations/002_sync_profile_email_confirmation.sql` and
+`supabase/migrations/003_product_ai_review_notes.sql`.
 
 6. In Supabase Auth URL Configuration, add this redirect URL for email
 confirmation:
@@ -42,6 +43,13 @@ https://your-domain.com/auth/callback
 ```bash
 npm run dev
 ```
+
+## AI Product Notes
+
+Set `OPENAI_API_KEY` in `.env.local` to generate product-specific AI style
+notes from the admin products page. Existing products can be backfilled with
+the "Generate AI notes" button, and newly added products generate notes after a
+successful save.
 
 ## Admin Access
 

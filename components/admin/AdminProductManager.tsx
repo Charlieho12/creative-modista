@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { Plus, Save, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Product } from "@/lib/types";
@@ -13,6 +13,7 @@ export function AdminProductManager() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generatingReviews, setGeneratingReviews] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
@@ -138,11 +139,57 @@ export function AdminProductManager() {
       return;
     }
 
+    let nextMessage = "Product saved.";
+
+    try {
+      const reviewResponse = await fetch("/api/admin/reviews/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, replace: true })
+      });
+
+      if (reviewResponse.ok) {
+        const reviewResult = (await reviewResponse.json()) as { count: number };
+        nextMessage = `Product saved and ${reviewResult.count} AI style notes generated.`;
+      } else {
+        const reviewError = (await reviewResponse.json()) as { error?: string };
+        nextMessage = `Product saved. AI style notes were not generated: ${reviewError.error ?? "unknown error"}`;
+      }
+    } catch (error) {
+      nextMessage = `Product saved. AI style notes were not generated: ${error instanceof Error ? error.message : "unknown error"}`;
+    }
+
     setProducts((current) => [product, ...current]);
-    setMessage("Product saved.");
+    setMessage(nextMessage);
     formElement.reset();
     setFormKey((key) => key + 1);
     setSaving(false);
+  }
+
+  async function generateReviewsForAllProducts() {
+    setGeneratingReviews(true);
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/admin/reviews/backfill", { method: "POST" });
+      const result = (await response.json()) as {
+        error?: string;
+        updatedProducts?: number;
+        generatedReviews?: number;
+      };
+
+      if (!response.ok) {
+        setMessage(result.error ?? "Unable to generate AI style notes.");
+      } else {
+        setMessage(
+          `Generated ${result.generatedReviews ?? 0} AI style notes for ${result.updatedProducts ?? 0} products.`
+        );
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to generate AI style notes.");
+    }
+
+    setGeneratingReviews(false);
   }
 
   async function updateProduct(product: Product, updates: Partial<Product>) {
@@ -245,7 +292,12 @@ export function AdminProductManager() {
       </form>
 
       <section className="rounded-lg border border-blush-100 bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-semibold">Manage products</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">Manage products</h2>
+          <Button type="button" variant="secondary" onClick={generateReviewsForAllProducts} disabled={generatingReviews || !products.length}>
+            <Sparkles size={17} /> {generatingReviews ? "Generating..." : "Generate AI notes"}
+          </Button>
+        </div>
         {loading ? (
           <p className="mt-5 rounded-lg bg-linen p-4 text-sm text-neutral-700">Loading live products...</p>
         ) : products.length ? (

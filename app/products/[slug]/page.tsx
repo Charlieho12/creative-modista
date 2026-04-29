@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
+import { ProductReviews } from "@/components/product/ProductReviews";
 import { RecentlyViewed } from "@/components/product/RecentlyViewed";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { siteConfig } from "@/lib/constants";
 import { getProductBySlug, getProducts } from "@/lib/data";
+import { getProductReviews } from "@/lib/reviews";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -40,6 +42,7 @@ export default async function ProductDetailsPage({ params }: Props) {
   }
 
   const allProducts = await getProducts();
+  const reviews = await getProductReviews(product.id);
   const related = allProducts
     .filter((item) => item.id !== product.id && item.category === product.category)
     .concat(allProducts.filter((item) => item.id !== product.id && item.category !== product.category))
@@ -61,8 +64,8 @@ export default async function ProductDetailsPage({ params }: Props) {
     },
     aggregateRating: {
       "@type": "AggregateRating",
-      ratingValue: product.rating,
-      reviewCount: product.reviewCount
+      ratingValue: product.rating || 5,
+      reviewCount: product.reviewCount || reviews.length
     }
   };
 
@@ -71,18 +74,8 @@ export default async function ProductDetailsPage({ params }: Props) {
       <JsonLd data={productJsonLd} />
       <ProductDetailClient product={product} />
       <section className="mt-16">
-        <SectionHeader eyebrow="Reviews" title="What customers notice first" />
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            "The fabric feels easy to wear and the neckline is flattering.",
-            "Cute for casual days and still nice enough for dinner.",
-            "Sizing notes helped me choose the right fit before checkout."
-          ].map((review) => (
-            <blockquote key={review} className="rounded-lg border border-blush-100 bg-white p-5 text-sm leading-7 text-neutral-700 shadow-sm">
-              &quot;{review}&quot;
-            </blockquote>
-          ))}
-        </div>
+        <SectionHeader eyebrow="Reviews" title="Product notes and customer reviews" />
+        <ProductReviews reviews={reviews} />
       </section>
 
       <section className="mt-16">
