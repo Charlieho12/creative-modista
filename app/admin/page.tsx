@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Package, ShoppingBag, Star, Users } from "lucide-react";
-import { getProducts } from "@/lib/data";
+import { getProductStats } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
@@ -8,11 +8,11 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const products = await getProducts();
+  const productStats = await getProductStats();
   const stats = [
-    { label: "Products", value: products.length, icon: Package },
-    { label: "Featured", value: products.filter((item) => item.isFeatured).length, icon: Star },
-    { label: "Best sellers", value: products.filter((item) => item.isBestSeller).length, icon: ShoppingBag },
+    { label: "Products", value: productStats.products, icon: Package },
+    { label: "Featured", value: productStats.featured, icon: Star },
+    { label: "Best sellers", value: productStats.bestSellers, icon: ShoppingBag },
     { label: "Customers", value: "Supabase", icon: Users }
   ];
 

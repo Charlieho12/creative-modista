@@ -26,7 +26,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" | "forgot" }) {
 
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      setMessage(error ? error.message : "Logged in. You can continue shopping.");
+      if (error) {
+        setMessage(error.message);
+      } else {
+        window.location.href = "/products";
+      }
     }
 
     if (mode === "signup") {

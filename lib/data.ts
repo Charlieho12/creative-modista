@@ -23,7 +23,7 @@ type DbProduct = {
 
 function mapProduct(product: DbProduct): Product {
   const images = product.product_images?.sort((a, b) => a.sort_order - b.sort_order) ?? [];
-  const fallback = mockProducts[0].image;
+  const fallback = "/brand/creative-modista-logo.png";
 
   return {
     id: product.id,
@@ -60,8 +60,13 @@ export async function getProducts(): Promise<Product[]> {
     .select("*, product_images(url, alt_text, sort_order)")
     .order("created_at", { ascending: false });
 
-  if (error || !data?.length) {
-    return mockProducts;
+  if (error) {
+    console.error("Unable to load Supabase products", error.message);
+    return [];
+  }
+
+  if (!data?.length) {
+    return [];
   }
 
   return (data as DbProduct[]).map(mapProduct);
@@ -81,8 +86,21 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     .single();
 
   if (error || !data) {
-    return mockProducts.find((product) => product.slug === slug) ?? null;
+    if (error) {
+      console.error("Unable to load Supabase product", error.message);
+    }
+    return null;
   }
 
   return mapProduct(data as DbProduct);
+}
+
+export async function getProductStats() {
+  const products = await getProducts();
+
+  return {
+    products: products.length,
+    featured: products.filter((item) => item.isFeatured).length,
+    bestSellers: products.filter((item) => item.isBestSeller).length
+  };
 }

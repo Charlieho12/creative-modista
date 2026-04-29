@@ -5,6 +5,7 @@ import { CheckCircle2, HeartHandshake, PackageCheck, Sparkles, Truck } from "luc
 import { ProductCard } from "@/components/product/ProductCard";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { siteConfig } from "@/lib/constants";
 import { getProducts } from "@/lib/data";
@@ -82,31 +83,43 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <SectionHeader eyebrow="Featured" title="Boutique picks for this week">
           <p>Curated Creative Modista styles for casual days, office looks, dates, and weekend plans.</p>
         </SectionHeader>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {featured.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {featured.length ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {featured.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="No featured products yet" description="Add products in the admin dashboard and mark them as featured." action={<Button href="/admin/products">Manage products</Button>} />
+        )}
       </section>
 
       <section className="bg-white py-16">
         <div className="container-shell">
           <SectionHeader eyebrow="New Arrivals" title="Just added to the rack" />
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {arrivals.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {arrivals.length ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {arrivals.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No new arrivals yet" description="Mark live products as new arrivals from the admin dashboard." />
+          )}
         </div>
       </section>
 
       <section className="container-shell py-16">
         <SectionHeader eyebrow="Best Sellers" title="Customer favorites" />
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {bestSellers.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {bestSellers.length ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {bestSellers.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="No best sellers yet" description="Mark live products as best sellers from the admin dashboard." />
+        )}
       </section>
 
       <section className="bg-linen py-16">
