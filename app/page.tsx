@@ -20,6 +20,7 @@ export default async function HomePage() {
     name: "Creative Modista",
     url: siteConfig.url,
     sameAs: [siteConfig.facebookUrl, siteConfig.instagramUrl, siteConfig.tiktokUrl, siteConfig.shopeeUrl],
+    logo: `${siteConfig.url}${siteConfig.logo}`,
     description: siteConfig.description,
     address: {
       "@type": "PostalAddress",

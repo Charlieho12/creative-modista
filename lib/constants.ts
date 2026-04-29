@@ -1,5 +1,6 @@
 export const siteConfig = {
   name: "Creative Modista",
+  logo: "/brand/creative-modista-logo.png",
   description:
     "Creative Modista is a women's fashion boutique in the Philippines for trendy tops, blouses, dresses, and stylish everyday pieces.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",

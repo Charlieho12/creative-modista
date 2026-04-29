@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { useState } from "react";
@@ -22,11 +23,18 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-blush-100 bg-white/95 backdrop-blur">
       <div className="container-shell flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2" aria-label="Creative Modista home">
-          <span className="grid size-10 place-items-center rounded-full bg-ink font-serif text-lg font-semibold text-white">
-            CM
+        <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="Creative Modista home">
+          <span className="relative h-11 w-28 overflow-hidden rounded bg-white md:w-36">
+            <Image
+              src={siteConfig.logo}
+              alt="Creative Modista official brand logo"
+              fill
+              priority
+              sizes="(min-width: 768px) 144px, 112px"
+              className="object-contain"
+            />
           </span>
-          <span className="font-serif text-xl font-semibold text-ink">{siteConfig.name}</span>
+          <span className="sr-only">{siteConfig.name}</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-neutral-700 lg:flex">

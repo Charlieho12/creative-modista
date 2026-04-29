@@ -31,11 +31,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export async function generateStaticParams() {
-  const products = await getProducts();
-  return products.map((product) => ({ slug: product.slug }));
-}
-
 export default async function ProductDetailsPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);

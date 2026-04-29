@@ -21,7 +21,19 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     url: siteConfig.url,
     siteName: "Creative Modista",
-    type: "website"
+    type: "website",
+    images: [
+      {
+        url: siteConfig.logo,
+        width: 750,
+        height: 750,
+        alt: "Creative Modista official brand logo"
+      }
+    ]
+  },
+  icons: {
+    icon: siteConfig.logo,
+    apple: siteConfig.logo
   },
   alternates: {
     canonical: siteConfig.url

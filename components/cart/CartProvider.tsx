@@ -28,19 +28,21 @@ type CartContextValue = {
   itemKey: (item: Pick<CartItem, "productId" | "size" | "color">) => string;
 };
 
+type SupabaseCartProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  sale_price: number | null;
+  stock: number;
+  product_images?: { url: string; sort_order: number }[];
+};
+
 type SupabaseCartItem = {
   quantity: number;
   size: string;
   color: string;
-  products: {
-    id: string;
-    name: string;
-    slug: string;
-    price: number;
-    sale_price: number | null;
-    stock: number;
-    product_images?: { url: string; sort_order: number }[];
-  };
+  products: SupabaseCartProduct | SupabaseCartProduct[];
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -101,11 +103,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         .eq("cart_id", cart.id);
 
       if (cartItems?.length) {
-        setItems(
-          (cartItems as SupabaseCartItem[]).map((item) => {
-            const product = item.products;
+        const syncedItems = (cartItems as unknown as SupabaseCartItem[]).reduce<CartItem[]>(
+          (currentItems, item) => {
+            const product = Array.isArray(item.products) ? item.products[0] : item.products;
+            if (!product) {
+              return currentItems;
+            }
             const images = product.product_images?.sort((a, b) => a.sort_order - b.sort_order) ?? [];
-            return {
+            currentItems.push({
               productId: product.id,
               name: product.name,
               slug: product.slug,
@@ -116,9 +121,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
               color: item.color,
               quantity: item.quantity,
               stock: product.stock
-            };
-          })
+            });
+            return currentItems;
+          },
+          []
         );
+        setItems(syncedItems);
       }
       setSyncReady(true);
     }

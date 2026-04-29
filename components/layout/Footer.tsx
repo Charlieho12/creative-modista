@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Facebook, Instagram, Mail, Music2, ShoppingBag } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 
@@ -7,7 +8,15 @@ export function Footer() {
     <footer className="mt-16 border-t border-blush-100 bg-ink text-white">
       <div className="container-shell grid gap-10 py-12 md:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
         <div>
-          <h2 className="font-serif text-2xl font-semibold">{siteConfig.name}</h2>
+          <Link href="/" className="relative block h-20 w-48 overflow-hidden rounded bg-white p-2">
+            <Image
+              src={siteConfig.logo}
+              alt="Creative Modista official brand logo"
+              fill
+              sizes="192px"
+              className="object-contain"
+            />
+          </Link>
           <p className="mt-3 max-w-sm text-sm leading-7 text-white/70">
             A feminine online boutique for stylish tops, blouses, dresses, and
             affordable women&apos;s fashion in the Philippines.
