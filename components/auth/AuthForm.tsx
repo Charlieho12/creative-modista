@@ -33,13 +33,18 @@ export function AuthForm({ mode }: { mode: "login" | "signup" | "forgot" }) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: name } }
+        options: {
+          data: { full_name: name },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
       setMessage(error ? error.message : "Account created. Please check your email if confirmation is enabled.");
     }
 
     if (mode === "forgot") {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?next=/account`
+      });
       setMessage(error ? error.message : "Password reset email sent.");
     }
 

@@ -14,6 +14,9 @@ create type public.order_status as enum (
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
+  email text,
+  email_confirmed_at timestamptz,
+  last_sign_in_at timestamptz,
   contact_number text,
   shipping_address text,
   role public.profile_role not null default 'customer',
@@ -133,8 +136,20 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name)
-  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', ''))
+  insert into public.profiles (
+    id,
+    full_name,
+    email,
+    email_confirmed_at,
+    last_sign_in_at
+  )
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', ''),
+    new.email,
+    new.email_confirmed_at,
+    new.last_sign_in_at
+  )
   on conflict (id) do nothing;
   return new;
 end;

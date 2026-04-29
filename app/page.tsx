@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { CheckCircle2, HeartHandshake, PackageCheck, Sparkles, Truck } from "lucide-react";
 import { ProductCard } from "@/components/product/ProductCard";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -8,7 +9,16 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { siteConfig } from "@/lib/constants";
 import { getProducts } from "@/lib/data";
 
-export default async function HomePage() {
+type HomePageProps = {
+  searchParams?: Promise<{ code?: string }>;
+};
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+  if (params?.code) {
+    redirect(`/auth/callback?code=${params.code}`);
+  }
+
   const products = await getProducts();
   const featured = products.filter((product) => product.isFeatured).slice(0, 4);
   const arrivals = products.filter((product) => product.isNewArrival).slice(0, 4);

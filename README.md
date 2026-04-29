@@ -21,7 +21,23 @@ cp .env.local.example .env.local
 
 4. Run the Supabase migration in `supabase/migrations/001_creative_modista_schema.sql`.
 
-5. Start the app:
+5. Run any later migrations, including
+`supabase/migrations/002_sync_profile_email_confirmation.sql`.
+
+6. In Supabase Auth URL Configuration, add this redirect URL for email
+confirmation:
+
+```text
+http://localhost:3000/auth/callback
+```
+
+For production, also add your deployed URL:
+
+```text
+https://your-domain.com/auth/callback
+```
+
+7. Start the app:
 
 ```bash
 npm run dev

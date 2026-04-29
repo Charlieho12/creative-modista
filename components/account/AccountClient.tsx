@@ -17,6 +17,7 @@ type OrderRow = {
 
 type ProfileState = {
   email: string;
+  emailConfirmedAt: string | null;
   name: string;
   contact: string;
   address: string;
@@ -43,7 +44,7 @@ export function AccountClient() {
 
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("full_name, contact_number, shipping_address")
+        .select("full_name, email, email_confirmed_at, contact_number, shipping_address")
         .eq("id", auth.user.id)
         .single();
 
@@ -54,7 +55,8 @@ export function AccountClient() {
         .order("created_at", { ascending: false });
 
       setProfile({
-        email: auth.user.email ?? "",
+        email: profileData?.email ?? auth.user.email ?? "",
+        emailConfirmedAt: profileData?.email_confirmed_at ?? auth.user.email_confirmed_at ?? null,
         name: profileData?.full_name ?? auth.user.user_metadata?.full_name ?? "",
         contact: profileData?.contact_number ?? "",
         address: profileData?.shipping_address ?? ""
@@ -91,6 +93,9 @@ export function AccountClient() {
         <UserRound className="text-blush-500" size={28} />
         <h2 className="mt-4 text-xl font-semibold">{profile.name || "Creative Modista customer"}</h2>
         <p className="mt-1 text-sm text-neutral-500">{profile.email}</p>
+        <p className="mt-2 inline-flex rounded-full bg-linen px-3 py-1 text-xs font-semibold text-ink">
+          {profile.emailConfirmedAt ? "Email confirmed" : "Email not confirmed"}
+        </p>
         <div className="mt-5 grid gap-3 text-sm text-neutral-700">
           <p><strong>Contact:</strong> {profile.contact || "Not set"}</p>
           <p><strong>Shipping:</strong> {profile.address || "Not set"}</p>
