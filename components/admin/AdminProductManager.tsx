@@ -59,8 +59,14 @@ export function AdminProductManager() {
     const name = String(form.get("name") ?? "");
     const price = Number(form.get("price") ?? 0);
     const category = String(form.get("category") ?? "Tops");
-    let image = String(form.get("image") ?? "") || "/brand/creative-modista-logo.png";
-    const imageFile = form.get("imageFile");
+    const imageUrlField = String(form.get("image") ?? "").trim();
+    let image = imageUrlField || "/brand/creative-modista-logo.png";
+    const primaryImageFile = form.get("imageFile");
+    const galleryFiles = form.getAll("galleryFiles").filter((entry): entry is File => entry instanceof File && entry.size > 0);
+    const galleryUrls = String(form.get("galleryUrls") ?? "")
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
     const supabase = createClient();
 
     if (!supabase) {
@@ -69,12 +75,12 @@ export function AdminProductManager() {
       return;
     }
 
-    if (imageFile instanceof File && imageFile.size > 0) {
-      const extension = imageFile.name.split(".").pop() ?? "jpg";
-      const path = `${id}/${slugify(name)}.${extension}`;
+    if (primaryImageFile instanceof File && primaryImageFile.size > 0) {
+      const extension = primaryImageFile.name.split(".").pop() ?? "jpg";
+      const path = `${id}/primary-${slugify(name)}.${extension}`;
       const { data, error } = await supabase.storage
         .from("product-images")
-        .upload(path, imageFile, { upsert: true });
+        .upload(path, primaryImageFile, { upsert: true });
       if (error) {
         setMessage(error.message);
         setSaving(false);
@@ -83,6 +89,29 @@ export function AdminProductManager() {
       const publicUrl = supabase.storage.from("product-images").getPublicUrl(data.path);
       image = publicUrl.data.publicUrl;
     }
+
+    const uploadedGalleryUrls: string[] = [];
+    for (const [index, file] of galleryFiles.entries()) {
+      const extension = file.name.split(".").pop() ?? "jpg";
+      const path = `${id}/gallery-${index + 1}-${slugify(name)}.${extension}`;
+      const { data, error } = await supabase.storage
+        .from("product-images")
+        .upload(path, file, { upsert: true });
+
+      if (error) {
+        setMessage(error.message);
+        setSaving(false);
+        return;
+      }
+
+      uploadedGalleryUrls.push(
+        supabase.storage.from("product-images").getPublicUrl(data.path).data.publicUrl
+      );
+    }
+
+    const allImages = [image, ...galleryUrls, ...uploadedGalleryUrls].filter(
+      (item, index, current) => Boolean(item) && current.indexOf(item) === index
+    );
 
     const product: Product = {
       id,
@@ -100,7 +129,7 @@ export function AdminProductManager() {
       isNewArrival: Boolean(form.get("new")),
       isBestSeller: Boolean(form.get("best")),
       image,
-      images: [image],
+      images: allImages.length ? allImages : [image],
       rating: 0,
       reviewCount: 0,
       createdAt: new Date().toISOString()
@@ -128,12 +157,14 @@ export function AdminProductManager() {
       return;
     }
 
-    const { error: imageError } = await supabase.from("product_images").insert({
-      product_id: product.id,
-      url: product.image,
-      alt_text: product.name,
-      sort_order: 0
-    });
+    const { error: imageError } = await supabase.from("product_images").insert(
+      product.images.map((url, index) => ({
+        product_id: product.id,
+        url,
+        alt_text: `${product.name} image ${index + 1}`,
+        sort_order: index
+      }))
+    );
 
     if (imageError) {
       setMessage(imageError.message);
@@ -162,7 +193,11 @@ export function AdminProductManager() {
     }
 
     setProducts((current) => [
-      { ...product, reviewCount: nextMessage.includes("generated") ? 3 : 0, rating: nextMessage.includes("generated") ? 4.7 : 0 },
+      {
+        ...product,
+        reviewCount: nextMessage.includes("generated") ? 3 : 0,
+        rating: nextMessage.includes("generated") ? 4.7 : 0
+      },
       ...current
     ]);
     setMessage(nextMessage);
@@ -312,12 +347,30 @@ export function AdminProductManager() {
             </label>
           ))}
           <label className="block text-sm font-semibold">
-            Upload product image
+            Upload primary product image
             <input
               name="imageFile"
               type="file"
               accept="image/*"
               className="mt-2 w-full rounded-lg border border-blush-100 px-4 py-2.5 text-sm outline-none focus:border-blush-300"
+            />
+          </label>
+          <label className="block text-sm font-semibold">
+            Upload gallery images
+            <input
+              name="galleryFiles"
+              type="file"
+              accept="image/*"
+              multiple
+              className="mt-2 w-full rounded-lg border border-blush-100 px-4 py-2.5 text-sm outline-none focus:border-blush-300"
+            />
+          </label>
+          <label className="block text-sm font-semibold">
+            Gallery image URLs, one per line
+            <textarea
+              name="galleryUrls"
+              rows={4}
+              className="mt-2 w-full rounded-lg border border-blush-100 px-4 py-2.5 outline-none focus:border-blush-300"
             />
           </label>
           <label className="block text-sm font-semibold">

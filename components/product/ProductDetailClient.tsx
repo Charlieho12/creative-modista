@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { Ruler, ShoppingBag, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ruler, ShoppingBag, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useCart } from "@/components/cart/CartProvider";
@@ -11,13 +11,24 @@ import { Product } from "@/lib/types";
 import { formatPeso } from "@/lib/utils";
 
 export function ProductDetailClient({ product }: { product: Product }) {
-  const [image, setImage] = useState(product.images[0] ?? product.image);
+  const initialImage = product.images[0] ?? product.image;
+  const galleryImages = product.images.length ? product.images : [product.image];
+  const [image, setImage] = useState(initialImage);
   const [size, setSize] = useState(product.sizes[0] ?? "Free Size");
   const [color, setColor] = useState(product.colors[0] ?? "Default");
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
 
   const addSelected = () => addItem(product, { size, color, quantity });
+  const currentImageIndex = Math.max(
+    0,
+    galleryImages.findIndex((item) => item === image)
+  );
+
+  function showImageAt(offset: number) {
+    const nextIndex = (currentImageIndex + offset + galleryImages.length) % galleryImages.length;
+    setImage(galleryImages[nextIndex]);
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
@@ -31,15 +42,37 @@ export function ProductDetailClient({ product }: { product: Product }) {
             sizes="(min-width: 1024px) 50vw, 100vw"
             className="object-cover"
           />
+          {galleryImages.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => showImageAt(-1)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-sm transition hover:bg-white"
+                aria-label="View previous product image"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => showImageAt(1)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-sm transition hover:bg-white"
+                aria-label="View next product image"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </>
+          ) : null}
         </div>
-        <div className="mt-4 grid grid-cols-4 gap-3">
-          {product.images.map((item) => (
+        <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-5">
+          {galleryImages.map((item, index) => (
             <button
-              key={item}
+              key={`${item}-${index}`}
               type="button"
               onClick={() => setImage(item)}
-              className="relative aspect-square overflow-hidden rounded-md border border-blush-100 bg-linen"
-              aria-label={`View ${product.name} image`}
+              className={`relative aspect-square overflow-hidden rounded-md border bg-linen ${
+                image === item ? "border-ink" : "border-blush-100"
+              }`}
+              aria-label={`View ${product.name} image ${index + 1}`}
             >
               <Image src={item} alt={`${product.name} thumbnail`} fill sizes="25vw" className="object-cover" />
             </button>
