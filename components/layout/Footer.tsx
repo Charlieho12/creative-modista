@@ -8,12 +8,12 @@ export function Footer() {
     <footer className="mt-16 border-t border-blush-100 bg-ink text-white">
       <div className="container-shell grid gap-10 py-12 md:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
         <div>
-          <Link href="/" className="relative block h-20 w-48 overflow-hidden rounded bg-white p-2">
+          <Link href="/" className="relative block h-28 w-72 max-w-full overflow-hidden rounded bg-white p-3">
             <Image
               src={siteConfig.logo}
               alt="Creative Modista official brand logo"
               fill
-              sizes="192px"
+              sizes="288px"
               className="object-contain"
             />
           </Link>

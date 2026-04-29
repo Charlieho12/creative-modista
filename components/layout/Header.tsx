@@ -22,15 +22,15 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-blush-100 bg-white/95 backdrop-blur">
-      <div className="container-shell flex h-16 items-center justify-between gap-4">
+      <div className="container-shell flex h-20 items-center justify-between gap-4">
         <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="Creative Modista home">
-          <span className="relative h-11 w-28 overflow-hidden rounded bg-white md:w-36">
+          <span className="relative h-16 w-44 shrink-0 overflow-hidden rounded bg-white md:w-56 lg:w-64">
             <Image
               src={siteConfig.logo}
               alt="Creative Modista official brand logo"
               fill
               priority
-              sizes="(min-width: 768px) 144px, 112px"
+              sizes="(min-width: 1024px) 256px, (min-width: 768px) 224px, 176px"
               className="object-contain"
             />
           </span>
