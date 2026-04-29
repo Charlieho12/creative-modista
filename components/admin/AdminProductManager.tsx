@@ -150,13 +150,13 @@ export function AdminProductManager() {
 
       if (reviewResponse.ok) {
         const reviewResult = (await reviewResponse.json()) as { count: number };
-        nextMessage = `Product saved and ${reviewResult.count} AI style notes generated.`;
+        nextMessage = `Product saved and ${reviewResult.count} Gemini AI style notes generated.`;
       } else {
         const reviewError = (await reviewResponse.json()) as { error?: string };
-        nextMessage = `Product saved. AI style notes were not generated: ${reviewError.error ?? "unknown error"}`;
+        nextMessage = `Product saved. Gemini AI style notes were not generated: ${reviewError.error ?? "unknown error"}`;
       }
     } catch (error) {
-      nextMessage = `Product saved. AI style notes were not generated: ${error instanceof Error ? error.message : "unknown error"}`;
+      nextMessage = `Product saved. Gemini AI style notes were not generated: ${error instanceof Error ? error.message : "unknown error"}`;
     }
 
     setProducts((current) => [product, ...current]);

@@ -46,10 +46,15 @@ npm run dev
 
 ## AI Product Notes
 
-Set `OPENAI_API_KEY` in `.env.local` to generate product-specific AI style
+Set `GEMINI_API_KEY` in `.env.local` to generate product-specific AI style
 notes from the admin products page. Existing products can be backfilled with
 the "Generate AI notes" button, and newly added products generate notes after a
 successful save.
+
+```env
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_REVIEW_MODEL=gemini-2.5-flash
+```
 
 ## Admin Access
 
