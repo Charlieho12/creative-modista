@@ -10,6 +10,7 @@ import { formatPeso, slugify } from "@/lib/utils";
 
 export function AdminProductManager() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,7 +34,7 @@ export function AdminProductManager() {
 
     const { data, error } = await supabase
       .from("products")
-      .select("*, product_images(url, alt_text, sort_order)")
+      .select("*, product_images(url, alt_text, sort_order), product_reviews(id)")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -42,6 +43,7 @@ export function AdminProductManager() {
     } else {
       setProducts((data ?? []).map(mapAdminProduct));
     }
+    setSelectedProductIds([]);
 
     setLoading(false);
   }
@@ -159,37 +161,80 @@ export function AdminProductManager() {
       nextMessage = `Product saved. Gemini AI style notes were not generated: ${error instanceof Error ? error.message : "unknown error"}`;
     }
 
-    setProducts((current) => [product, ...current]);
+    setProducts((current) => [
+      { ...product, reviewCount: nextMessage.includes("generated") ? 3 : 0, rating: nextMessage.includes("generated") ? 4.7 : 0 },
+      ...current
+    ]);
     setMessage(nextMessage);
     formElement.reset();
     setFormKey((key) => key + 1);
     setSaving(false);
   }
 
-  async function generateReviewsForAllProducts() {
+  async function generateReviewsForSelectedProducts() {
+    if (!selectedProductIds.length) {
+      setMessage("Select at least one product first.");
+      return;
+    }
+
     setGeneratingReviews(true);
     setMessage("");
 
     try {
-      const response = await fetch("/api/admin/reviews/backfill", { method: "POST" });
-      const result = (await response.json()) as {
-        error?: string;
-        updatedProducts?: number;
-        generatedReviews?: number;
-      };
+      const results = await Promise.all(
+        selectedProductIds.map(async (productId) => {
+          const response = await fetch("/api/admin/reviews/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId, replace: true })
+          });
 
-      if (!response.ok) {
-        setMessage(result.error ?? "Unable to generate AI style notes.");
-      } else {
-        setMessage(
-          `Generated ${result.generatedReviews ?? 0} AI style notes for ${result.updatedProducts ?? 0} products.`
-        );
-      }
+          const result = (await response.json()) as { error?: string; count?: number };
+          if (!response.ok) {
+            throw new Error(result.error ?? "Unable to generate AI style notes.");
+          }
+          return { productId, count: result.count ?? 0 };
+        })
+      );
+
+      const generatedReviews = results.reduce((total, result) => total + result.count, 0);
+      setProducts((current) =>
+        current.map((product) => {
+          const reviewResult = results.find((result) => result.productId === product.id);
+          return reviewResult
+            ? {
+                ...product,
+                reviewCount: reviewResult.count,
+                rating: reviewResult.count ? product.rating || 4.7 : product.rating
+              }
+            : product;
+        })
+      );
+      setMessage(
+        `Generated ${generatedReviews} AI notes for ${selectedProductIds.length} selected product${selectedProductIds.length > 1 ? "s" : ""}.`
+      );
+      setSelectedProductIds([]);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to generate AI style notes.");
+    } finally {
+      setGeneratingReviews(false);
     }
+  }
 
-    setGeneratingReviews(false);
+  function toggleProductSelection(productId: string) {
+    setSelectedProductIds((current) =>
+      current.includes(productId)
+        ? current.filter((id) => id !== productId)
+        : [...current, productId]
+    );
+  }
+
+  function toggleAllProducts(checked: boolean) {
+    setSelectedProductIds(checked ? products.map((product) => product.id) : []);
+  }
+
+  function aiNoteStatus(product: Product) {
+    return product.reviewCount > 0 ? `${product.reviewCount} AI note${product.reviewCount > 1 ? "s" : ""}` : "No AI notes";
   }
 
   async function updateProduct(product: Product, updates: Partial<Product>) {
@@ -293,8 +338,20 @@ export function AdminProductManager() {
 
       <section className="rounded-lg border border-blush-100 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold">Manage products</h2>
-          <Button type="button" variant="secondary" onClick={generateReviewsForAllProducts} disabled={generatingReviews || !products.length}>
+          <div>
+            <h2 className="text-xl font-semibold">Manage products</h2>
+            <p className="mt-1 text-sm text-neutral-500">
+              {selectedProductIds.length
+                ? `${selectedProductIds.length} selected for AI note generation`
+                : "Select one or more products to generate AI notes"}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={generateReviewsForSelectedProducts}
+            disabled={generatingReviews || !selectedProductIds.length}
+          >
             <Sparkles size={17} /> {generatingReviews ? "Generating..." : "Generate AI notes"}
           </Button>
         </div>
@@ -302,10 +359,19 @@ export function AdminProductManager() {
           <p className="mt-5 rounded-lg bg-linen p-4 text-sm text-neutral-700">Loading live products...</p>
         ) : products.length ? (
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[980px] text-left text-sm">
+            <table className="w-full min-w-[1120px] text-left text-sm">
               <thead className="border-b border-blush-100 text-xs uppercase tracking-[0.14em] text-neutral-500">
                 <tr>
+                  <th className="py-3">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all products"
+                      checked={products.length > 0 && selectedProductIds.length === products.length}
+                      onChange={(event) => toggleAllProducts(event.target.checked)}
+                    />
+                  </th>
                   <th className="py-3">Product</th>
+                  <th>AI Notes</th>
                   <th>Category</th>
                   <th>Price</th>
                   <th>Sizes</th>
@@ -318,7 +384,26 @@ export function AdminProductManager() {
               <tbody>
                 {products.map((product) => (
                   <tr key={product.id} className="border-b border-blush-50">
+                    <td>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${product.name}`}
+                        checked={selectedProductIds.includes(product.id)}
+                        onChange={() => toggleProductSelection(product.id)}
+                      />
+                    </td>
                     <td className="py-4 font-semibold">{product.name}</td>
+                    <td>
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                          product.reviewCount > 0
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-neutral-100 text-neutral-600"
+                        }`}
+                      >
+                        {aiNoteStatus(product)}
+                      </span>
+                    </td>
                     <td>
                       <input
                         value={product.category}
@@ -405,6 +490,7 @@ type AdminDbProduct = {
   is_best_seller: boolean;
   created_at: string;
   product_images?: { url: string; sort_order: number }[];
+  product_reviews?: { id: string }[];
 };
 
 function mapAdminProduct(product: AdminDbProduct): Product {
@@ -428,7 +514,7 @@ function mapAdminProduct(product: AdminDbProduct): Product {
     image: images[0]?.url ?? "/brand/creative-modista-logo.png",
     images: images.length ? images.map((image) => image.url) : ["/brand/creative-modista-logo.png"],
     rating: 0,
-    reviewCount: 0,
+    reviewCount: product.product_reviews?.length ?? 0,
     createdAt: product.created_at
   };
 }
