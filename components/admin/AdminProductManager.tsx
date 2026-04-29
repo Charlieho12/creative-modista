@@ -47,10 +47,11 @@ export function AdminProductManager() {
 
   async function addProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setSaving(true);
     setMessage("");
 
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const id = crypto.randomUUID();
     const name = String(form.get("name") ?? "");
     const price = Number(form.get("price") ?? 0);
@@ -139,7 +140,7 @@ export function AdminProductManager() {
 
     setProducts((current) => [product, ...current]);
     setMessage("Product saved.");
-    event.currentTarget.reset();
+    formElement.reset();
     setFormKey((key) => key + 1);
     setSaving(false);
   }
