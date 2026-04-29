@@ -1,5 +1,4 @@
 import { Star } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ProductReview } from "@/lib/types";
 
@@ -28,11 +27,6 @@ export function ProductReviews({ reviews }: { reviews: ProductReview[] }) {
             </span>
           </div>
           <p className="mt-4 text-sm leading-7 text-neutral-700">{review.body}</p>
-          {review.source === "ai_generated" ? (
-            <div className="mt-4">
-              <Badge className="border-champagne bg-linen">AI-generated style note</Badge>
-            </div>
-          ) : null}
         </article>
       ))}
     </div>
